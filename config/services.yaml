@@ -1,0 +1,138 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+    api_external_domain: "%env(resolve:API_EXTERNAL_DOMAIN)%"
+    api_external_version: "%env(resolve:API_EXTERNAL_VERSION)%"
+    mailer_dsn: "%env(MAILER_DSN)%"
+    mailer_sender: "%env(MAILER_SENDER)%"
+    path_avatar_directory: "%env(PATH_AVATAR_DIRECTORY)%"
+    path_references_directory: "%env(resolve:PATH_REFERENCES_DIRECTORY)%"
+    email_for_user_reference: "%env(resolve:EMAIL_FOR_USER_REFERENCE)%"
+    email_for_homework: "%env(resolve:EMAIL_FOR_HOMEWORK)%"
+    url_rss: "%env(resolve:URL_NEWS_RSS)%"
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Tests/'
+
+    # controllers are imported separately to make sure services can be injected
+    # as action arguments even if you don't extend any base controller class
+    App\Controller\:
+        resource: '../src/Controller/'
+        tags: ['controller.service_arguments']
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+
+    App\EventListener\ExceptionListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
+
+    App\Service\ApiExternal\AbstractService:
+        abstract: true
+        arguments:
+            - "%api_external_domain%"
+            - "%api_external_version%"
+            - "@doctrine.orm.entity_manager"
+            - "@validator"
+
+    App\Service\ApiExternal\SecurityService:
+        autowire: true
+        autoconfigure: false
+        parent: App\Service\ApiExternal\AbstractService
+        public: true
+
+    App\Service\ApiExternal\ProfileService:
+        autowire: true
+        autoconfigure: false
+        parent: App\Service\ApiExternal\AbstractService
+        public: true
+
+    App\Service\ApiExternal\ScheduleService:
+        autowire: true
+        autoconfigure: false
+        parent: App\Service\ApiExternal\AbstractService
+        public: true
+
+    App\Service\SubjectService:
+        autowire: true
+        autoconfigure: false
+        parent: App\Service\ApiExternal\AbstractService
+        public: true
+
+    App\Service\JournalService:
+        autowire: true
+        autoconfigure: false
+        parent: App\Service\ApiExternal\AbstractService
+        public: true
+
+    App\Service\DebtsService:
+        autowire: true
+        autoconfigure: false
+        parent: App\Service\ApiExternal\AbstractService
+        public: true
+
+    App\Service\RatingService:
+        autowire: true
+        autoconfigure: false
+        parent: App\Service\ApiExternal\AbstractService
+        public: true
+
+    App\Service\ProfileService:
+        autowire: true
+        autoconfigure: false
+        public: true
+
+    App\Service\TeacherService:
+        autowire: true
+        autoconfigure: false
+        parent: App\Service\ApiExternal\AbstractService
+        public: true
+
+    App\Service\StudentService:
+        autowire: true
+        autoconfigure: false
+        parent: App\Service\ApiExternal\AbstractService
+        public: true
+
+    App\Service\EventService:
+        autowire: true
+        autoconfigure: false
+        parent: App\Service\ApiExternal\AbstractService
+        public: true
+
+    App\Service\UserService:
+        autowire: true
+        autoconfigure: false
+        public: true
+
+    App\Service\NotificationService:
+        autowire: true
+        autoconfigure: false
+        public: true
+
+    App\Service\MailService:
+        public: true
+
+    App\Service\ImportService:
+        autowire: true
+        autoconfigure: false
+        public: true
+        arguments:
+            $pathTeachersCsvFolderNew: "%env(resolve:PATH_IMPORT_TEACHERS_NEW)%"
+            $pathTeachersCsvFolderCompleted: "%env(resolve:PATH_IMPORT_TEACHERS_COMPLETED)%"
+            $pathTeachersCsvFolderError: "%env(resolve:PATH_IMPORT_TEACHERS_ERROR)%"
